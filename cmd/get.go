@@ -5,7 +5,7 @@ import (
     "encoding/json"
     "fmt"
     "net/http"
-    "vdb/internal/models"
+    "testdb/internal/models"
 )
 
 func getValue(url, key string) (models.Value, error) {

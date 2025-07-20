@@ -5,7 +5,7 @@ import (
     "encoding/json"
     "fmt"
     "net/http"
-    "vdb/internal/models"
+    "testdb/internal/models"
 )
 
 func setKeyValue(url string, kv models.KeyValue) error {
