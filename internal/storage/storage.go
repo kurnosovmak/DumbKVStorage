@@ -22,10 +22,7 @@ func (s *Storage) Set(kv models.KeyValue) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.db[kv.Key.Key] = kv.Value.Value
-	err := file.DumpMapToFile(s.db)
-	if err != nil {
-		return err
-	}
+	go file.DumpMapToFile(s.db)
 	return nil
 }
 
