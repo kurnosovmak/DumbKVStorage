@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package dumbkv;
+
+option go_package = "pkg/proto/dumbkv;dumbkv";
+
+service DumbKVService {
+  rpc Put(PutRequest) returns (PutResponse);
+  rpc Get(GetRequest) returns (GetResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+  rpc Size(SizeRequest) returns (SizeResponse);
+}
+
+message PutRequest {
+  string key = 1;
+  string value = 2; // интерпретируется как []byte
+}
+
+message PutResponse {
+  string status = 1; // optional: "ok", "error", etc.
+}
+
+message GetRequest {
+  string key = 1;
+}
+
+message GetResponse {
+  string value = 1;
+  bool found = 2;
+}
+
+message DeleteRequest {
+  string key = 1;
+}
+
+message DeleteResponse {
+  string status = 1; // optional
+}
+
+message SizeRequest {} // пустой
+
+message SizeResponse {
+  int32 size = 1;
+}

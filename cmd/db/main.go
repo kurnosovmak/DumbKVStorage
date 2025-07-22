@@ -3,12 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"google.golang.org/grpc"
 	"log/slog"
+	"net"
 	"os"
 	"os/signal"
+	protoServer "testdb/internal/grpc"
 	"testdb/internal/memtable"
 	"testdb/internal/snapshot"
 	"testdb/internal/wal"
+	"testdb/pkg/proto/dumbkv"
 	"time"
 )
 
@@ -46,15 +50,22 @@ func main() {
 	}
 	log.Info("memtable initialized", slog.String("time", time.Since(timeStart).String()))
 
-	for i := 0; i < 20_00; i++ {
-		val, exists := mt.Get(fmt.Sprintf("key #%d", i))
-		if !exists {
-			log.Warn("missing key", slog.String("key", fmt.Sprintf("key #%d", i)))
-		}
-		if string(val) != fmt.Sprintf("value #%d", i) {
-			log.Warn("missing value", slog.String("value", fmt.Sprintf("value #%d", i)))
-		}
+	lis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		log.Error("failed to listen", slog.Any("err", err))
+		return
 	}
+
+	grpcServer := grpc.NewServer()
+	ms := protoServer.NewMemTableServer(mt)
+	dumbkv.RegisterDumbKVServiceServer(grpcServer, ms)
+	log.Info("Server started on :50051")
+
+	go func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Error("failed to serve", slog.Any("err", err))
+		}
+	}()
 
 	daemon := snapshot.NewSnapshotDaemon(testDur, &header, log, mt)
 	cxt, cancel := context.WithCancel(context.Background())
@@ -72,5 +83,6 @@ func main() {
 	<-sing
 	log.Info("shutting down")
 	cancel()
+	grpcServer.GracefulStop()
 
 }
